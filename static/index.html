@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Yamb of the Balkans</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="apple-touch-icon" href="icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <script src="js/libs/socket.io.min.js"></script>
+    <script src="js/libs/confetti.browser.min.js"></script>
+</head>
+<body class="">
+
+    <div id="universal-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 id="univ-title">Obaveštenje</h2>
+            <p id="univ-msg" style="margin-bottom: 20px; color: var(--text-muted); white-space: pre-line;"></p>
+            <div id="univ-input-container" class="hidden">
+                <input type="text" id="univ-input" placeholder="...">
+            </div>
+            <div class="u-modal-btns" id="univ-btns"></div>
+        </div>
+    </div>
+
+    <div id="menu-screen">
+        <div style="position: absolute; top: 20px; right: 20px;">
+            <button class="header-btn" onclick="app.toggleTheme()" style="background: var(--bg-surface); border-radius: 50%;">🌗</button>
+        </div>
+
+        <div class="hero-title">YAMB OF THE BALKANS</div>
+        <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 10px;">v1.0.3 (b29)</div>
+        <div class="ad-banner menu-ad-top"></div>
+
+        <button class="menu-btn online" onclick="app.openOnlineModal()"><span>🌐</span> ONLINE DUEL</button>
+        <div style="display: flex; gap: 10px; justify-content: center; width: 100%; max-width: 300px;">
+            <button class="menu-btn" onclick="app.showSettings()" style="flex:1;">⚙ PODEŠAVANJA</button>
+            <button class="menu-btn" onclick="app.showStats()" style="flex:1;">📊 STATISTIKA</button>
+        </div>
+        <button class="menu-btn gold" onclick="app.showHighscores()">🏆 TOP LISTA</button>
+        <div style="height: 10px;"></div>
+        <button class="menu-btn" onclick="app.setupGame(1)">👤 SOLO IGRA</button>
+        <button class="menu-btn" onclick="app.showAiMenu()">🤖 PROTIV AI</button>
+        <button class="menu-btn" onclick="app.loadGameFromFile()">📂 UČITAJ IGRU</button>
+        <button class="menu-btn rules-btn" onclick="app.showRules()">📖 PRAVILA IGRE</button>
+        <button class="menu-btn donate" onclick="app.donate()">❤ DONIRAJ</button>
+        <div class="ad-banner menu-ad-bottom"></div>
+        <button class="menu-btn exit" onclick="app.quitApp()">IZLAZ</button>
+    </div>
+
+    <div id="rules-screen" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-body); z-index: 2000; display: flex; flex-direction: column;">
+        <div style="flex-shrink: 0; display: flex; align-items: center; background: var(--bg-surface); width: 100%; padding: 15px; border-bottom: 1px solid var(--bg-grid);">
+            <button onclick="app.showMainMenu()" style="background: transparent; border: none; color: var(--text-main); font-size: 24px; padding: 0 10px; cursor: pointer;">❮</button>
+            <h2 style="margin: 0; color: var(--primary); flex: 1; text-align: center; padding-right: 44px;">PRAVILA IGRE</h2>
+        </div>
+        <div class="rules-wrapper" style="flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px; padding-bottom: 100px; width: 100%; max-width: 800px; margin: 0 auto;">
+            <div class="rules-card">
+                <h3>🎲 Osnove Igre</h3>
+                <p style="text-align: left; margin: 0; color: var(--text-muted); font-size: 14px;">Igra se sa <strong>6 kockica</strong>. U svakom potezu imate pravo na <strong>3 bacanja</strong>. Cilj je popuniti sve kolone i ostvariti najveći zbir poena.</p>
+            </div>
+            <div class="rules-card">
+                <h3>📊 Značenje Kolona</h3>
+                <ul style="padding: 0; list-style: none; text-align: left; font-size: 14px;">
+                    <li style="margin-bottom: 10px;"><strong class="c-nadole">↓ Nadole (Kolona 1)</strong><br><span style="color: var(--text-muted);">Popunjava se redom od 1 do Yamba.</span></li>
+                    <li style="margin-bottom: 10px;"><strong class="c-slobodna">S Slobodna (Kolona 2)</strong><br><span style="color: var(--text-muted);">Popunjava se bilo kojim redom.</span></li>
+                    <li style="margin-bottom: 10px;"><strong class="c-nagore">↑ Nagore (Kolona 4)</strong><br><span style="color: var(--text-muted);">Popunjava se redom od Yamba do 1.</span></li>
+                    <li style="margin-bottom: 10px;"><strong class="c-najava">📢 Najava (Kolona 6)</strong><br><span style="color: var(--text-muted);">Posle 1. bacanja najavljujete polje. Morate ga odigrati.</span></li>
+                    <li style="margin-bottom: 10px;"><strong class="c-rucno">R Ručno (Kolona 5)</strong><br><span style="color: var(--text-muted);">Samo ako je kombinacija složena iz prvog bacanja.</span></li>
+                    <li><strong class="c-sredina">⇅ Sredina (Kolona 3)</strong><br><span style="color: var(--text-muted);">Prvo se igraju Max i Min, pa se širi ka krajevima.</span></li>
+                </ul>
+            </div>
+            <div class="rules-card">
+                <h3>🧮 Bodovanje</h3>
+                <p style="font-size: 14px; color: var(--text-muted);"><strong>ZBIR 1:</strong> Bonus +30 za zbir preko 60.<br><strong>ZBIR 2:</strong> (Max - Min) × Broj Jedinica.<br><strong>ZBIR 3:</strong> Triling (20), Ful (30), Poker (40), Yamb (50), Kenta (66/56/46).</p>
+            </div>
+            <button class="menu-btn" onclick="app.showMainMenu()" style="background: var(--btn-bg); margin-top: 20px;">NAZAD U MENI</button>
+        </div>
+    </div>
+
+    <div id="online-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>ONLINE</h2>
+            <button class="menu-btn online" onclick="app.startOnlineRandom()">🎲 NASUMIČNI</button>
+            <div style="height: 1px; background: var(--bg-grid); margin: 20px 0;"></div>
+            <h3 style="color: var(--text-muted); font-size:14px;">PRIJATELJSKA SOBA</h3>
+            <input type="text" id="friend-code" placeholder="Kod sobe...">
+            <div style="display: flex; gap: 10px;">
+                <button class="menu-btn" style="flex:1; background: var(--primary); color:white;" onclick="app.joinPrivateGame()">UĐI</button>
+                <button class="menu-btn" style="flex:1; background: var(--gold); color:black;" onclick="app.createPrivateGame()">NOVA</button>
+            </div>
+            <br><button class="menu-btn exit" onclick="document.getElementById('online-modal').classList.add('hidden')">NAZAD</button>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>PODEŠAVANJA</h2>
+            <div style="text-align: left; margin-bottom: 20px;">
+                <label style="color: var(--text-muted); font-size: 14px;">Ime</label>
+                <input type="text" id="setting-name" placeholder="Igrač">
+            </div>
+            <label style="display: flex; align-items: center; justify-content:center; padding: 10px; background: var(--bg-grid); border-radius: 8px;">
+                <input type="checkbox" id="setting-sound" style="margin-right: 10px; transform: scale(1.3);"> Zvuk
+            </label>
+            <br>
+            <button class="menu-btn" style="background: var(--success); color: white;" onclick="app.saveSettings()">SAČUVAJ</button>
+            <br><button class="menu-btn exit" onclick="document.getElementById('settings-modal').classList.add('hidden')">ZATVORI</button>
+        </div>
+    </div>
+
+    <div id="stats-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>STATISTIKA</h2>
+            <div style="margin-bottom: 20px; text-align: left;">
+                <p>Odigrano: <strong id="stat-games" style="float:right; color:var(--gold)">0</strong></p>
+                <p>Pobede: <strong id="stat-wins" style="float:right; color:var(--gold)">0</strong></p>
+                <p>Rekord: <strong id="stat-high" style="float:right; color:var(--gold)">0</strong></p>
+            </div>
+            <button class="menu-btn" onclick="document.getElementById('stats-modal').classList.add('hidden')">ZATVORI</button>
+        </div>
+    </div>
+    
+    <div id="highscore-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>🏆 TOP LISTA</h2>
+            <ul style="list-style: none; padding: 0; margin: 0; text-align: left;" id="hs-list-modal"></ul>
+            <br><button class="menu-btn exit" onclick="document.getElementById('highscore-modal').classList.add('hidden')">ZATVORI</button>
+        </div>
+    </div>
+
+    <div id="chat-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="height: 70vh; display: flex; flex-direction: column;">
+            <h2>💬 CHAT</h2>
+            <div id="chat-display-modal" style="flex:1; background: var(--bg-body); padding:10px; overflow-y:auto; text-align:left; margin-bottom:15px; border-radius: 8px; font-size: 14px;"></div>
+            <div class="quick-chat-row" style="display:flex; gap:5px; overflow-x:auto; padding-bottom:10px; margin-bottom:5px;">
+                <button class="chat-chip" onclick="app.sendQuickChat('Srećno! 🤞')">Srećno!</button>
+                <button class="chat-chip" onclick="app.sendQuickChat('Bravo! 🔥')">Bravo!</button>
+                <button class="chat-chip" onclick="app.sendQuickChat('Hahaha 😂')">Hahaha</button>
+                <button class="chat-chip" onclick="app.sendQuickChat('Uff... 😓')">Uff...</button>
+                <button class="chat-chip" onclick="app.sendQuickChat('Brže malo! ⏰')">Brže!</button>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="chat-input-modal" style="flex:1; margin-bottom:0;" placeholder="...">
+                <button style="background: var(--primary); color:white; padding: 0 20px; border-radius:8px;" onclick="app.sendChatFromModal()">➤</button>
+            </div>
+            <br><button class="menu-btn exit" onclick="app.closeChat()">ZATVORI</button>
+        </div>
+    </div>
+
+    <div id="waiting-screen" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-body); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1000;">
+        <div class="loader"></div> <h2>POVEZIVANJE...</h2> <p id="wait-msg">Tražim server...</p>
+        <button class="menu-btn exit" onclick="app.cancelOnline()" style="margin-top: 30px;">ODUSTANI</button>
+    </div>
+    
+    <div id="ai-menu" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-body); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px;">
+        <div class="hero-title" style="font-size: 32px;">TEŽINA AI</div>
+        <button class="menu-btn" style="background: #22c55e;" onclick="app.setupGame(2, true, 'easy')">LAK</button>
+        <button class="menu-btn" style="background: #eab308; color: black;" onclick="app.setupGame(2, true, 'medium')">SREDNJI</button>
+        <button class="menu-btn" style="background: #f97316;" onclick="app.setupGame(2, true, 'hard')">TEŽAK</button>
+        <button class="menu-btn" style="background: #ef4444;" onclick="app.setupGame(2, true, 'insane')">ULTRA</button>
+        <button class="menu-btn exit" style="margin-top: 20px;" onclick="app.showMainMenu()">NAZAD</button>
+    </div>
+
+    <div id="game-screen" class="hidden">
+        <header>
+            <button class="header-btn" onclick="app.quitToMenu()">❮ MENI</button>
+            <div style="display:flex; gap:10px;">
+                <button class="header-btn" style="color: var(--primary);" onclick="app.saveGame()">💾</button>
+                <button class="header-btn" onclick="app.toggleTheme()">🌗</button>
+            </div>
+        </header>
+        <div class="content-area">
+            <div class="tables-container" id="tables-container"></div>
+        </div>
+        <div class="chat-fab" id="chat-fab" onclick="app.openChat()">💬</div>
+        <div class="controls-fixed">
+            <div class="dice-container" id="dice-container"></div>
+            <div class="action-row">
+                <button id="btn-undo" class="btn-game btn-undo" onclick="app.undoMove()" disabled>↶</button>
+                <div class="status-info">
+                    <div id="lbl-status">Bacanje: 0/3</div>
+                    <span id="lbl-turn">Na redu: ...</span>
+                </div>
+                <button id="btn-najava" class="btn-game btn-najava" onclick="app.clickNajava()" disabled>NAJAVA</button>
+                <button id="btn-bacaj" class="btn-game btn-roll" onclick="app.throwDice()">BACAJ</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+    <script src="sw.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js').catch(console.error);
+        }
+    </script>
+</body>
+</html>
